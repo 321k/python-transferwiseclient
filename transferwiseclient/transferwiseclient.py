@@ -2,21 +2,15 @@ import uuid
 import requests
 import json
 
-def getTransferWiseProfileId(isBusiness, access_token):
+def getTransferWiseProfiles(access_token):
+  # To get the personal profile ID, use json.loads(profiles.text)[0]['id']
+
   profiles = requests.get('https://api.transferwise.com/v1/profiles',
-             headers={
-                 'Authorization': 'Bearer '+ access_token,
-                 'Content-Type': 'application/json'})
-
-  if profiles.status_code == 200:
-    if isBusiness == True:
-      return json.loads(profiles.text)[1]['id']
-
-    else:
-      return json.loads(profiles.text)[0]['id']
-
-  else:
-    return 'Failed to get profile'
+    headers={
+    'Authorization': 'Bearer '+ access_token,
+    'Content-Type': 'application/json'})
+  
+  return profiles
 
 def createTransferWiseRecipient(email, currency, name, legalType, profileId, access_token):
   recipient = requests.post('https://api.transferwise.com/v1/accounts',
@@ -33,61 +27,47 @@ def createTransferWiseRecipient(email, currency, name, legalType, profileId, acc
                 headers={
                    'Authorization': 'Bearer '+ access_token,
                    'Content-Type': 'application/json'})
+  #json.loads(recipient.text)['id']
+  return recipient
 
-  if recipient.status_code == 200:
-      return json.loads(recipient.text)['id']
-
-  else:
-   return 'Failed to create recipient'
-
-def createTransferWiseQuote(profileId, sourceCurrency, targetCurrency, transferType, access_token, sourceAmount=None, targetAmount=None):
+def createTransferWiseQuote(profileId, sourceCurrency, targetCurrency, access_token, sourceAmount=None, targetAmount=None):
   if sourceAmount is None and targetAmount is None:
     return "Specify sourceAmount or targetAmount"
-
   elif sourceAmount is not None and targetAmount is not None:
     return "Specify only sourceAmount or targetAmount"
-
   elif sourceAmount is not None and targetAmount is None:
     quote = requests.post('https://api.transferwise.com/v1/quotes',
-                              data = json.dumps({
-                              'profile': profileId,
-                              'source': sourceCurrency,
-                              'target': targetCurrency,
-                              'rateType': 'FIXED',
-                              'sourceAmount': sourceAmount,
-                              'type': transferType
-                              }),
-                              headers={
-                                'Authorization': 'Bearer '+ access_token,
-                                'Content-Type': 'application/json'})
-
-  elif targetAmount is None and targetAmount is not None:
+      data = json.dumps({
+      'profile': profileId,
+      'source': sourceCurrency,
+      'target': targetCurrency,
+      'rateType': 'FIXED',
+      'sourceAmount': sourceAmount,
+      'type': 'REGULAR'
+      }),
+      headers={
+      'Authorization': 'Bearer '+ access_token,
+      'Content-Type': 'application/json'})
+  elif sourceAmount is None and targetAmount is not None:
     quote = requests.post('https://api.transferwise.com/v1/quotes',
-                              data = json.dumps({
-                              'profile': profileId,
-                              'source': sourceCurrency,
-                              'target': targetCurrency,
-                              'rateType': 'FIXED',
-                              'targetAmount': targetAmount,
-                              'type': transferType
-                              }),
-                              headers={
-                                'Authorization': 'Bearer '+ access_token,
-                                'Content-Type': 'application/json'})
-
+      data = json.dumps({
+      'profile': profileId,
+      'source': sourceCurrency,
+      'target': targetCurrency,
+      'rateType': 'FIXED',
+      'targetAmount': targetAmount,
+      'type': 'REGULAR'
+      }),
+      headers={
+      'Authorization': 'Bearer '+ access_token,
+      'Content-Type': 'application/json'})
   else:
    return "Something went wrong"
-
-  if quote.status_code == 200:
-      return json.loads(quote.text)['id']
-
-  else:
-   return 'Failed to create quote'
-
-
+  #json.loads(quote.text)['id']
+  return quote
 
 def createPayment(recipientId, quoteId, reference, access_token):
-  transfer = requests.post('https://api.transferwise.com/v1/transfers',
+  response = requests.post('https://api.transferwise.com/v1/transfers',
                 data = json.dumps({
                   "targetAccount": recipientId,
                   "quote": quoteId,
@@ -99,12 +79,24 @@ def createPayment(recipientId, quoteId, reference, access_token):
                 headers={
                    'Authorization': 'Bearer '+ access_token,
                    'Content-Type': 'application/json'})
-
-  if transfer.status_code == 200:
-      return json.loads(transfer.text)['id']
-
-  else:
-   return 'Failed to create transfer'
+  #json.loads(transfer.text)['id']
+  return response
 
 def redirectToPay(transferId):
   return redirect('https://transferwise.com/transferFlow#/transfer/' + requestId)
+
+
+def getBorderlessAccountId(profileId, access_token):
+  response = requests.get('https://api.transferwise.com/v1/borderless-accounts?profileId=' + str(profileId),
+                headers={
+                   'Authorization': 'Bearer '+ access_token,
+                   'Content-Type': 'application/json'})
+  #json.loads(response.text)[0]['id']
+  return response
+
+def getBorderlessAccounts(borderlessId, access_token):
+  response = requests.get('https://api.transferwise.com/v1/borderless-accounts/' + str(borderlessId),
+                headers={
+                   'Authorization': 'Bearer '+ access_token,
+                   'Content-Type': 'application/json'})
+  return response
