@@ -1,6 +1,9 @@
 import uuid
 import requests
 import json
+from dateutil.parser import parse
+from datetime import datetime
+
 
 class TransferWiseClient:
   def __init__(self, access_token):
@@ -13,7 +16,7 @@ class TransferWiseClient:
     return requests.get(self.api_url + method, params = data, headers = self.headers)
   
   def post(self, method, data = {}):
-    return requests.post(self.api_url + method, data = data, headers = self.headers)
+    return requests.post(self.api_url + method, data = json.dumps(data), headers = self.headers)
 
   def getProfiles(self):
     # To get the personal profile ID, use json.loads(profiles.text)[0]['id']
@@ -22,7 +25,7 @@ class TransferWiseClient:
 
   def createRecipient(self, email, currency, name, legalType, profileId):
     recipient = self.post('accounts',
-                  data = json.dumps({
+                  data = {
                     "profile": profileId,
                     "accountHolderName": name,
                     "currency": currency,
@@ -31,7 +34,7 @@ class TransferWiseClient:
                     "details": {
                       "email": email
                     }
-                  }))
+                  })
     #json.loads(recipient.text)['id']
     return recipient
 
@@ -42,24 +45,24 @@ class TransferWiseClient:
       return "Specify only sourceAmount or targetAmount"
     elif sourceAmount is not None and targetAmount is None:
       quote = self.post('quotes',
-        data = json.dumps({
+        data = {
         'profile': profileId,
         'source': sourceCurrency,
         'target': targetCurrency,
         'rateType': 'FIXED',
         'sourceAmount': sourceAmount,
         'type': 'REGULAR'
-        }))
+        })
     elif sourceAmount is None and targetAmount is not None:
       quote = self.post('quotes',
-        data = json.dumps({
+        data = {
         'profile': profileId,
         'source': sourceCurrency,
         'target': targetCurrency,
         'rateType': 'FIXED',
         'targetAmount': targetAmount,
         'type': 'REGULAR'
-        }))
+        })
     else:
       return "Something went wrong"
     #json.loads(quote.text)['id']
@@ -67,14 +70,14 @@ class TransferWiseClient:
 
   def createTransfer(self, recipientId, quoteId, reference):
     response = self.post('transfers',
-                  data = json.dumps({
+                  data = {
                     "targetAccount": recipientId,
                     "quote": quoteId,
                     "customerTransactionId": str(uuid.uuid4()),
                     "details": {
                       "reference": reference,
                       }
-                    }))
+                    })
     #json.loads(transfer.text)['id']
     return response
 
@@ -85,6 +88,20 @@ class TransferWiseClient:
 
   def getAccount(self, accountId):
     response = self.get('borderless-accounts/' + str(accountId))
+    return response
+
+  def getAccountStatement(self, accountId, currency, intervalStart, intervalEnd, type = 'json'):
+    if not isinstance(intervalStart, datetime):
+      intervalStart = parse(intervalStart)
+    if not isinstance(intervalEnd, datetime):
+      intervalEnd = parse(intervalEnd)
+    
+    response = self.get('borderless-accounts/' + str(accountId) + '/statement.' + type, 
+                  data = {
+                    "currency": currency,
+                    "intervalStart": intervalStart.isoformat() + '.000Z',
+                    "intervalEnd": intervalEnd.isoformat() + '.999Z'
+                    })
     return response
 
 
