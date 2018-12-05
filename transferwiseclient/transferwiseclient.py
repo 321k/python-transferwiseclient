@@ -79,12 +79,12 @@ class TransferWiseClient:
     return response
 
   def getBorderlessAccountId(self, profileId):
-    response = self.get('https://api.transferwise.com/v1/borderless-accounts?profileId=' + str(profileId))
+    response = self.get('borderless-accounts', {"profileId": str(profileId)})
     #json.loads(response.text)[0]['id']
     return response
 
   def getBorderlessAccounts(self, borderlessId):
-    response = self.get('https://api.transferwise.com/v1/borderless-accounts/' + str(borderlessId))
+    response = self.get('borderless-accounts/' + str(borderlessId))
     return response
 
 
