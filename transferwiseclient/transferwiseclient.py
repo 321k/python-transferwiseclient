@@ -12,10 +12,14 @@ class TransferWiseClient:
     self.headers={'Authorization': 'Bearer '+ self.access_token,
                   'Content-Type': 'application/json'}
 
-  def get(self, method, data={}):
+  def get(self, method, data=None):
+    if data is None:
+      data = {}
     return requests.get(self.api_url + method, params=data, headers=self.headers)
   
-  def post(self, method, data={}):
+  def post(self, method, data=None):
+    if data is None:
+      data = {}
     return requests.post(self.api_url + method, data=json.dumps(data), headers=self.headers)
 
   def getProfiles(self):
