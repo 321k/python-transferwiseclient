@@ -22,19 +22,19 @@ class TransferWiseClient:
       data = {}
     return requests.post(self.api_url + method, data=json.dumps(data), headers=self.headers)
 
-  def getProfiles(self):
+  def get_profiles(self):
     # To get the personal profile ID, use json.loads(profiles.text)[0]['id']
     profiles = self.get('profiles')
     return profiles
 
-  def createRecipient(self, email, currency, name, legalType, profileId):
+  def create_recipient(self, email, currency, name, legal_type, profile_id):
     recipient = self.post('accounts',
                   data = {
-                    "profile": profileId,
+                    "profile": profile_id,
                     "accountHolderName": name,
                     "currency": currency,
                     "type": "email",
-                    "legalType": legalType,
+                    "legalType": legal_type,
                     "details": {
                       "email": email
                     }
@@ -42,29 +42,29 @@ class TransferWiseClient:
     #json.loads(recipient.text)['id']
     return recipient
 
-  def createQuote(self, profileId, sourceCurrency, targetCurrency, sourceAmount=None, targetAmount=None):
-    if sourceAmount is None and targetAmount is None:
-      return "Specify sourceAmount or targetAmount"
-    elif sourceAmount is not None and targetAmount is not None:
-      return "Specify only sourceAmount or targetAmount"
-    elif sourceAmount is not None and targetAmount is None:
+  def create_quote(self, profile_id, source_currency, target_currency, source_amount=None, target_amount=None):
+    if source_amount is None and target_amount is None:
+      return "Specify source_amount or target_amount"
+    elif source_amount is not None and target_amount is not None:
+      return "Specify only source_amount or target_amount"
+    elif source_amount is not None and target_amount is None:
       quote = self.post('quotes',
         data = {
-        'profile': profileId,
-        'source': sourceCurrency,
-        'target': targetCurrency,
+        'profile': profile_id,
+        'source': source_currency,
+        'target': target_currency,
         'rateType': 'FIXED',
-        'sourceAmount': sourceAmount,
+        'sourceAmount': source_amount,
         'type': 'REGULAR'
         })
-    elif sourceAmount is None and targetAmount is not None:
+    elif source_amount is None and target_amount is not None:
       quote = self.post('quotes',
         data = {
-        'profile': profileId,
-        'source': sourceCurrency,
-        'target': targetCurrency,
+        'profile': profile_id,
+        'source': source_currency,
+        'target': target_currency,
         'rateType': 'FIXED',
-        'targetAmount': targetAmount,
+        'targetAmount': target_amount,
         'type': 'REGULAR'
         })
     else:
@@ -72,11 +72,11 @@ class TransferWiseClient:
     #json.loads(quote.text)['id']
     return quote
 
-  def createTransfer(self, recipientId, quoteId, reference):
+  def create_transfer(self, recipient_id, quote_id, reference):
     response = self.post('transfers',
                   data = {
-                    "targetAccount": recipientId,
-                    "quote": quoteId,
+                    "targetAccount": recipient_id,
+                    "quote": quote_id,
                     "customerTransactionId": str(uuid.uuid4()),
                     "details": {
                       "reference": reference,
@@ -85,55 +85,54 @@ class TransferWiseClient:
     #json.loads(transfer.text)['id']
     return response
 
-  def getProfileAccounts(self, profileId):
-    response = self.get('borderless-accounts', {"profileId": str(profileId)})
+  def get_profile_accounts(self, profile_id):
+    response = self.get('borderless-accounts', {"profileId": str(profile_id)})
     #json.loads(response.text)[0]['id']
     return response
 
-  def getAccount(self, accountId):
-    response = self.get('borderless-accounts/' + str(accountId))
+  def get_account(self, account_id):
+    response = self.get('borderless-accounts/' + str(account_id))
     return response
 
-  def getAccountStatement(self, accountId, currency, intervalStart, intervalEnd, type='json'):
-    if not isinstance(intervalStart, datetime):
-      intervalStart = parse(intervalStart)
-    if not isinstance(intervalEnd, datetime):
-      intervalEот барсиnd = parse(intervalEnd)
-    от барси
-    response = от барсиself.get('borderless-accounts/' + str(accountId) + '/statement.' + type, 
-               от барси   data = {
-               от барси     "currency": currency,
-               от барси     "intervalStart": intervalStart.isoformat() + '.000Z',
-               от барси     "intervalEnd": intervalEnd.isoformat() + '.999Z'
+  def get_account_statement(self, account_id, currency, interval_start, interval_end, type='json'):
+    if not isinstance(interval_start, datetime):
+      interval_start = parse(interval_start)
+    if not isinstance(interval_end, datetime):
+      interval_end = parse(interval_end)
+    response = self.get('borderless-accounts/' + str(account_id) + '/statement.' + type, 
+                  data = {
+                    "currency": currency,
+                    "interval_start": interval_start.isoformat() + '.000Z',
+                    "interval_end": interval_end.isoformat() + '.999Z'
                     })
     return response
 
 
-# Backword compatability
+# Backward compatability
 
 def getTransferWiseProfiles(access_token):
   TW = TransferWiseClient(access_token)
-  return TW.getProfiles()
+  return TW.get_profiles()
 
 def createTransferWiseRecipient(email, currency, name, legalType, profileId, access_token):
   TW = TransferWiseClient(access_token)
-  return TW.createRecipient(email, currency, name, legalType, profileId)
+  return TW.create_recipient(email, currency, name, legalType, profileId)
 
 def createTransferWiseQuote(profileId, sourceCurrency, targetCurrency, access_token, sourceAmount=None, targetAmount=None):
   TW = TransferWiseClient(access_token)
-  return TW.createQuote(profileId, sourceCurrency, targetCurrency, sourceAmount, targetAmount)
+  return TW.create_quote(profileId, sourceCurrency, targetCurrency, sourceAmount, targetAmount)
 
 def createPayment(recipientId, quoteId, reference, access_token):
   TW = TransferWiseClient(access_token)
-  return TW.createTransfer(recipientId, quoteId, reference)
+  return TW.create_transfer(recipientId, quoteId, reference)
 
 def getBorderlessAccountId(profileId, access_token):
   TW = TransferWiseClient(access_token)
-  return TW.getProfileAccounts(profileId)
+  return TW.get_profile_accounts(profileId)
 
 def getBorderlessAccounts(borderlessId, access_token):
   TW = TransferWiseClient(access_token)
-  return TW.getAccount(borderlessId)
+  return TW.get_account(borderlessId)
 
 # Not sure the intended purpose or if is working
 def redirectToPay(self, transferId):
