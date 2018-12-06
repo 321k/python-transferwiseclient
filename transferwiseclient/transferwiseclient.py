@@ -102,8 +102,8 @@ class TransferWiseClient:
     response = self.get('borderless-accounts/' + str(account_id) + '/statement.' + type, 
                   data = {
                     "currency": currency,
-                    "interval_start": interval_start.isoformat() + '.000Z',
-                    "interval_end": interval_end.isoformat() + '.999Z'
+                    "intervalStart": interval_start.isoformat() + '.000Z',
+                    "intervalEnd": interval_end.isoformat() + '.999Z'
                     })
     return response
 
