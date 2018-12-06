@@ -12,11 +12,11 @@ class TransferWiseClient:
     self.headers={'Authorization': 'Bearer '+ self.access_token,
                   'Content-Type': 'application/json'}
 
-  def get(self, method, data = {}):
-    return requests.get(self.api_url + method, params = data, headers = self.headers)
+  def get(self, method, data={}):
+    return requests.get(self.api_url + method, params=data, headers=self.headers)
   
-  def post(self, method, data = {}):
-    return requests.post(self.api_url + method, data = json.dumps(data), headers = self.headers)
+  def post(self, method, data={}):
+    return requests.post(self.api_url + method, data=json.dumps(data), headers=self.headers)
 
   def getProfiles(self):
     # To get the personal profile ID, use json.loads(profiles.text)[0]['id']
@@ -90,17 +90,17 @@ class TransferWiseClient:
     response = self.get('borderless-accounts/' + str(accountId))
     return response
 
-  def getAccountStatement(self, accountId, currency, intervalStart, intervalEnd, type = 'json'):
+  def getAccountStatement(self, accountId, currency, intervalStart, intervalEnd, type='json'):
     if not isinstance(intervalStart, datetime):
       intervalStart = parse(intervalStart)
     if not isinstance(intervalEnd, datetime):
-      intervalEnd = parse(intervalEnd)
-    
-    response = self.get('borderless-accounts/' + str(accountId) + '/statement.' + type, 
-                  data = {
-                    "currency": currency,
-                    "intervalStart": intervalStart.isoformat() + '.000Z',
-                    "intervalEnd": intervalEnd.isoformat() + '.999Z'
+      intervalEот барсиnd = parse(intervalEnd)
+    от барси
+    response = от барсиself.get('borderless-accounts/' + str(accountId) + '/statement.' + type, 
+               от барси   data = {
+               от барси     "currency": currency,
+               от барси     "intervalStart": intervalStart.isoformat() + '.000Z',
+               от барси     "intervalEnd": intervalEnd.isoformat() + '.999Z'
                     })
     return response
 
