@@ -13,16 +13,16 @@ import pprint
 
 TW = TWClient.TransferWiseClient('xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx')
 
-Profiles = TW.get_profiles().json()
-pprint.pprint(Profiles)
+profiles = TW.get_profiles().json()
+pprint.pprint(profiles)
 
 print('=========')
-ProfileAccounts = TW.get_profile_accounts(Profiles[0]['id']).json()
-pprint.pprint(ProfileAccounts)
+profile_accounts = TW.get_profile_accounts(profiles[0]['id']).json()
+pprint.pprint(profile_accounts)
 
 print('=========')
-pprint.pprint(TW.get_account(ProfileAccounts[0]['id']).json())
+pprint.pprint(TW.get_account(profile_accounts[0]['id']).json())
 
 print('=========')
-pprint.pprint(TW.get_account_statement(ProfileAccounts[0]['id'], ProfileAccounts[0]['balances'][0]['currency'], '2018-12-01', '2018-12-06').json())
+pprint.pprint(TW.get_account_statement(profile_accounts[0]['id'], profile_accounts[0]['balances'][0]['currency'], '2018-12-01', '2018-12-06').json())
 ```
