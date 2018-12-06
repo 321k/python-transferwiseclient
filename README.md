@@ -5,7 +5,7 @@ git clone https://github.com/321k/python-transferwiseclient.git
 pip install -r requirements.txt
 ```
 
-## Quich example
+## Quick example
 
 ``` python
 import transferwiseclient as TWClient
