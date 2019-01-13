@@ -24,8 +24,7 @@ class TransferWiseClient:
 
   def get_profiles(self):
     # To get the personal profile ID, use json.loads(profiles.text)[0]['id']
-    profiles = self.get('profiles')
-    return profiles
+    return self.get('profiles')
 
   def create_recipient(self, email, currency, name, legal_type, profile_id):
     recipient = self.post('accounts',
