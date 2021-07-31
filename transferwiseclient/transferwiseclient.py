@@ -1,26 +1,67 @@
 import uuid
 import requests
 import json
+import base64
+import rsa
 from dateutil.parser import parse
 from datetime import datetime
 
 
 class TransferWiseClient:
-  def __init__(self, access_token):
+  def __init__(self, access_token, private_key=None):
     self.access_token = access_token
-    self.api_url = 'https://api.transferwise.com/v1/'
+    self.api_url = 'https://api.transferwise.com/'
     self.headers={'Authorization': 'Bearer '+ self.access_token,
                   'Content-Type': 'application/json'}
+    if private_key:
+      self.private_key_path = private_key
 
-  def get(self, method, data=None):
+  def get(self, method, data=None, version='v1'):
     if data is None:
       data = {}
-    return requests.get(self.api_url + method, params=data, headers=self.headers)
+    return self.request(method, data=data, version=version)
   
-  def post(self, method, data=None):
+  def post(self, method, data=None, version='v1'):
     if data is None:
       data = {}
-    return requests.post(self.api_url + method, data=json.dumps(data), headers=self.headers)
+    return self.request(method, data=json.dumps(data), type='POST', version=version)
+
+  def request(self, method, data=None, type='GET', version='v1', one_time_token=None):
+    headers = self.headers.copy()
+    if one_time_token:
+      headers['x-2fa-approval'] = one_time_token
+      headers['X-Signature'] = self.do_sca_challenge(one_time_token)
+
+    if type == 'GET':
+      res = requests.get(self.api_url + version + '/' + method, params=data, headers=headers)
+    else:
+      res = requests.post(self.api_url + version + '/' + method, data=data, headers=headers)
+
+    if res.status_code == 403 and 'x-2fa-approval' in res.headers and not one_time_token:
+      res = self.request(method=method, data=data, type=type, version=version, one_time_token=res.headers['x-2fa-approval'])
+
+    return res
+
+  def do_sca_challenge(self, one_time_token):
+
+    # Read the private key file as bytes.
+    with open(self.private_key_path, 'rb') as f:
+      private_key_data = f.read()
+
+    private_key = rsa.PrivateKey.load_pkcs1(private_key_data, 'PEM')
+
+    # Use the private key to sign the one-time-token that was returned 
+    # in the x-2fa-approval header of the HTTP 403.
+    signed_token = rsa.sign(
+        one_time_token.encode('ascii'), 
+        private_key, 
+        'SHA-256')
+
+    # Encode the signed message as friendly base64 format for HTTP 
+    # headers.
+    signature = base64.b64encode(signed_token).decode('ascii')
+
+    return signature
 
   def get_profiles(self):
     # To get the personal profile ID, use json.loads(profiles.text)[0]['id']
@@ -93,17 +134,17 @@ class TransferWiseClient:
     response = self.get('borderless-accounts/' + str(account_id))
     return response
 
-  def get_account_statement(self, account_id, currency, interval_start, interval_end, type='json'):
+  def get_account_statement(self, profile_id, account_id, currency, interval_start, interval_end, type='json'):
     if not isinstance(interval_start, datetime):
       interval_start = parse(interval_start)
     if not isinstance(interval_end, datetime):
       interval_end = parse(interval_end)
-    response = self.get('borderless-accounts/' + str(account_id) + '/statement.' + type, 
+    response = self.get('/profiles/' + str(profile_id) + '/borderless-accounts/' + str(account_id) + '/statement.' + type, 
                   data = {
                     "currency": currency,
                     "intervalStart": interval_start.isoformat() + '.000Z',
                     "intervalEnd": interval_end.isoformat() + '.999Z'
-                    })
+                    }, version='v3')
     return response
 
 
